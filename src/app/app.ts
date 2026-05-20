@@ -87,76 +87,84 @@ function isRiskUrl(url: string): boolean {
           </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3" aria-label="Sidebar">
-          @if (activeMenu() === 'global') {
-            <div class="flex flex-col gap-0.5">
-              <div class="px-2 pt-2 pb-1 text-[10px] font-mono tracking-[0.12em] text-fg-4">Workspace</div>
-              @for (item of globalItems; track item.key) {
-                <button type="button"
-                        class="rail-link group flex items-center gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface w-full"
-                        [class.rail-active]="isGlobalActive(item)"
-                        (click)="onGlobalClick(item)">
-                  <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
-                    @switch (item.key) {
-                      @case ('inventory')  { <svg lucidePackage class="w-3.5 h-3.5"></svg> }
-                      @case ('risk')       { <svg lucideShieldAlert class="w-3.5 h-3.5"></svg> }
-                      @case ('gap')        { <svg lucideTarget class="w-3.5 h-3.5"></svg> }
-                      @case ('monitoring') { <svg lucideActivity class="w-3.5 h-3.5"></svg> }
-                    }
-                  </span>
-                  <span class="flex-1 text-[13px] text-fg-2 group-hover:text-fg rail-label">{{ item.label }}</span>
-                  @if (item.hasChildren) {
-                    <svg lucideChevronRight class="w-3.5 h-3.5 text-fg-4 opacity-0 group-hover:opacity-100 transition-opacity"></svg>
-                  }
-                </button>
-              }
-            </div>
-          } @else if (activeMenu() === 'risk') {
-            <div class="flex flex-col gap-0.5">
+        <nav class="flex-1 overflow-hidden relative" aria-label="Sidebar">
+          <!-- GLOBAL pane -->
+          <div class="innernav-pane absolute inset-0 overflow-y-auto px-3 py-3 flex flex-col gap-0.5"
+               [class.innernav-pane-active]="activeMenu() === 'global'"
+               [class.innernav-pane-leave-left]="leavingMenu() === 'global'"
+               [attr.aria-hidden]="activeMenu() === 'global' ? null : true"
+               [attr.inert]="activeMenu() === 'global' ? null : ''">
+            <div class="px-2 pt-2 pb-1 text-[10px] font-mono tracking-[0.12em] text-fg-4">Workspace</div>
+            @for (item of globalItems; track item.key) {
               <button type="button"
-                      class="back-link flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-surface text-fg-3 hover:text-fg w-full"
-                      (click)="back()">
-                <svg lucideArrowLeft class="w-3.5 h-3.5"></svg>
-                <span class="text-[12.5px] font-medium">Risk Workflow</span>
+                      class="rail-link group flex items-center gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface w-full"
+                      [class.rail-active]="isGlobalActive(item)"
+                      (click)="onGlobalClick(item)">
+                <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
+                  @switch (item.key) {
+                    @case ('inventory')  { <svg lucidePackage class="w-3.5 h-3.5"></svg> }
+                    @case ('risk')       { <svg lucideShieldAlert class="w-3.5 h-3.5"></svg> }
+                    @case ('gap')        { <svg lucideTarget class="w-3.5 h-3.5"></svg> }
+                    @case ('monitoring') { <svg lucideActivity class="w-3.5 h-3.5"></svg> }
+                  }
+                </span>
+                <span class="flex-1 text-[13px] text-fg-2 group-hover:text-fg rail-label">{{ item.label }}</span>
+                @if (item.hasChildren) {
+                  <svg lucideChevronRight class="w-3.5 h-3.5 text-fg-4 opacity-0 group-hover:opacity-100 transition-opacity"></svg>
+                }
               </button>
+            }
+          </div>
 
-              <div class="mx-2 my-2 border-t border-line-soft"></div>
+          <!-- RISK inner pane -->
+          <div class="innernav-pane absolute inset-0 overflow-y-auto px-3 py-3 flex flex-col gap-0.5"
+               [class.innernav-pane-active]="activeMenu() === 'risk'"
+               [class.innernav-pane-leave-left]="leavingMenu() === 'risk'"
+               [attr.aria-hidden]="activeMenu() === 'risk' ? null : true"
+               [attr.inert]="activeMenu() === 'risk' ? null : ''">
+            <button type="button"
+                    class="back-link flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-surface text-fg-3 hover:text-fg w-full"
+                    (click)="back()">
+              <svg lucideArrowLeft class="w-3.5 h-3.5"></svg>
+              <span class="text-[12.5px] font-medium">Risk Workflow</span>
+            </button>
 
-              @for (item of nav; track item.path) {
-                <a
-                  [routerLink]="['/', item.path]"
-                  routerLinkActive="rail-active"
-                  class="rail-link group flex items-start gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface">
-                  <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
-                    @switch (item.path) {
-                      @case ('criteria')  { <svg lucideSlidersHorizontal class="w-3.5 h-3.5"></svg> }
-                      @case ('register')  { <svg lucideAlertTriangle class="w-3.5 h-3.5"></svg> }
-                      @case ('treatment') { <svg lucideShieldCheck class="w-3.5 h-3.5"></svg> }
-                      @case ('soa')       { <svg lucideFileCheck2 class="w-3.5 h-3.5"></svg> }
+            <div class="mx-2 my-2 border-t border-line-soft"></div>
+
+            @for (item of nav; track item.path) {
+              <a
+                [routerLink]="['/', item.path]"
+                routerLinkActive="rail-active"
+                class="rail-link group flex items-start gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface">
+                <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
+                  @switch (item.path) {
+                    @case ('criteria')  { <svg lucideSlidersHorizontal class="w-3.5 h-3.5"></svg> }
+                    @case ('register')  { <svg lucideAlertTriangle class="w-3.5 h-3.5"></svg> }
+                    @case ('treatment') { <svg lucideShieldCheck class="w-3.5 h-3.5"></svg> }
+                    @case ('soa')       { <svg lucideFileCheck2 class="w-3.5 h-3.5"></svg> }
+                  }
+                </span>
+                <span class="flex-1 min-w-0">
+                  <span class="flex items-center gap-2">
+                    <span class="font-mono text-[9.5px] tracking-[0.12em] text-fg-4">{{ item.step }}</span>
+                    @if (item.path === 'register' && store.registerSummary().reviewRequired > 0) {
+                      <span class="font-mono text-[9px] tracking-wider px-1 py-0.5 rounded"
+                            style="background:rgb(240 201 135 / 0.20); color:var(--warn)">
+                        REVIEW
+                      </span>
+                    }
+                    @if (item.path === 'treatment' && store.registerSummary().breaching > 0) {
+                      <span class="font-mono text-[9px] tracking-wider px-1 py-0.5 rounded"
+                            style="background:rgb(242 164 164 / 0.20); color:var(--danger)">
+                        {{ store.registerSummary().breaching }}
+                      </span>
                     }
                   </span>
-                  <span class="flex-1 min-w-0">
-                    <span class="flex items-center gap-2">
-                      <span class="font-mono text-[9.5px] tracking-[0.12em] text-fg-4">{{ item.step }}</span>
-                      @if (item.path === 'register' && store.registerSummary().reviewRequired > 0) {
-                        <span class="font-mono text-[9px] tracking-wider px-1 py-0.5 rounded"
-                              style="background:rgb(240 201 135 / 0.20); color:var(--warn)">
-                          REVIEW
-                        </span>
-                      }
-                      @if (item.path === 'treatment' && store.registerSummary().breaching > 0) {
-                        <span class="font-mono text-[9px] tracking-wider px-1 py-0.5 rounded"
-                              style="background:rgb(242 164 164 / 0.20); color:var(--danger)">
-                          {{ store.registerSummary().breaching }}
-                        </span>
-                      }
-                    </span>
-                    <span class="text-[13px] text-fg-2 group-hover:text-fg block leading-tight rail-label">{{ item.label }}</span>
-                  </span>
-                </a>
-              }
-            </div>
-          }
+                  <span class="text-[13px] text-fg-2 group-hover:text-fg block leading-tight rail-label">{{ item.label }}</span>
+                </span>
+              </a>
+            }
+          </div>
         </nav>
 
         <div class="px-4 py-3 border-t border-line-soft flex items-center gap-2.5">
@@ -238,6 +246,31 @@ function isRiskUrl(url: string): boolean {
   styles: [
     `
       :host { display: block; }
+
+      /* Subtle pane swap — slide-fade ±12px */
+      .innernav-pane {
+        opacity: 0;
+        transform: translateX(12px);
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+      .innernav-pane.innernav-pane-active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+      .innernav-pane.innernav-pane-leave-left {
+        opacity: 0;
+        transform: translateX(-12px);
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .innernav-pane {
+          transition: opacity 80ms linear;
+          transform: none !important;
+        }
+      }
+
       .rail-link {
         transition: background 0.12s ease;
       }
@@ -259,6 +292,9 @@ export class App {
   readonly pageTitle = computed(() => this.currentTitle());
 
   readonly activeMenu = signal<MenuView>('global');
+  /** While a pane is animating out, it stays mounted with `innernav-pane-leave-left`. Cleared after the transition. */
+  readonly leavingMenu = signal<MenuView | null>(null);
+  private leaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly globalItems: GlobalItem[] = [
     { key: 'inventory',  label: 'Inventory',  hasChildren: false, route: 'inventory' },
@@ -302,7 +338,7 @@ export class App {
 
   onGlobalClick(item: GlobalItem) {
     if (item.hasChildren) {
-      this.activeMenu.set(item.key);
+      this.swapMenu(item.key);
       if (item.key === 'risk' && !isRiskUrl(this.router.url)) {
         this.router.navigate(['/register']);
       }
@@ -312,7 +348,17 @@ export class App {
   }
 
   back() {
-    this.activeMenu.set('global');
+    this.swapMenu('global');
+  }
+
+  private swapMenu(next: MenuView) {
+    const prev = this.activeMenu();
+    if (prev === next) return;
+    if (this.leaveTimer) clearTimeout(this.leaveTimer);
+    this.leavingMenu.set(prev);
+    this.activeMenu.set(next);
+    // Match the longer of the two pane transitions (220ms transform).
+    this.leaveTimer = setTimeout(() => this.leavingMenu.set(null), 240);
   }
 
   private findDeepest(route: ActivatedRoute): ActivatedRoute {
