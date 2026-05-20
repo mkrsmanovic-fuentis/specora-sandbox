@@ -1,3 +1,4 @@
+import { UpperCasePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -22,6 +23,7 @@ import { AnnexControl, ImplementationStatus } from '../core/models';
     LucideSearch,
     LucideSparkles,
     LucideX,
+    UpperCasePipe,
   ],
   template: `
     <div class="px-10 pt-10 pb-24 max-w-[1480px] mx-auto">
@@ -242,7 +244,8 @@ export class SoaView {
   readonly linkedIds = computed(() => {
     const ids = new Set<string>();
     for (const t of this.store.treatments()) {
-      if (t.option === 'modify' && t.linkedControlId) ids.add(t.linkedControlId);
+      if (t.option !== 'modify') continue;
+      for (const pc of t.plannedControls) ids.add(pc.id);
     }
     return ids;
   });
@@ -301,22 +304,28 @@ export class SoaView {
   linkedRiskCount(controlId: string): number {
     return this.store
       .treatments()
-      .filter((t) => t.option === 'modify' && t.linkedControlId === controlId).length;
+      .filter((t) => t.option === 'modify' && t.plannedControls.some((pc) => pc.id === controlId))
+      .length;
   }
 
   linkedTreatmentsFor(controlId: string) {
     const risks = this.store.risks();
+    const inv = this.store.inventoryById();
+    const threatsMap = this.store.threatsById();
     return this.store
       .treatments()
-      .filter((t) => t.option === 'modify' && t.linkedControlId === controlId)
+      .filter((t) => t.option === 'modify' && t.plannedControls.some((pc) => pc.id === controlId))
       .map((t) => {
         const r = risks.find((x) => x.id === t.riskId);
-        return {
-          riskId: t.riskId,
-          asset: r?.asset ?? '',
-          threat: r?.threat ?? '',
-          option: t.option,
-        };
+        const asset = r
+          ? r.scopeWide
+            ? 'Scope-wide'
+            : r.affects.map((id) => inv.get(id)?.name ?? id).join(', ') || 'Unlinked'
+          : '';
+        const threat = r
+          ? r.threats.map((id) => threatsMap.get(id)?.title ?? id).join(' · ') || ''
+          : '';
+        return { riskId: t.riskId, asset, threat, option: t.option };
       });
   }
 }

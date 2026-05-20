@@ -6,6 +6,7 @@ import {
   LucideAlertTriangle,
   LucideArrowLeft,
   LucideBell,
+  LucideBookOpen,
   LucideChevronDown,
   LucideChevronRight,
   LucideClipboardList,
@@ -15,7 +16,6 @@ import {
   LucideSearch,
   LucideShieldAlert,
   LucideShieldCheck,
-  LucideSlidersHorizontal,
   LucideTarget,
   LucideZap,
 } from '@lucide/angular';
@@ -23,7 +23,7 @@ import {
 import { IsmsStore } from './core/isms-store';
 import { SimulatorPanel } from './shell/simulator-panel.component';
 
-type GlobalKey = 'inventory' | 'risk' | 'gap' | 'monitoring';
+type GlobalKey = 'inventory' | 'methodology' | 'risk' | 'gap' | 'monitoring';
 type MenuView = 'global' | GlobalKey;
 
 interface GlobalItem {
@@ -41,7 +41,7 @@ interface NavItem {
   step: string;
 }
 
-const RISK_ROUTES = ['/criteria', '/register', '/treatment', '/soa'];
+const RISK_ROUTES = ['/register', '/treatment', '/soa'];
 
 function isRiskUrl(url: string): boolean {
   return RISK_ROUTES.some((r) => url === r || url.startsWith(r + '?') || url.startsWith(r + '/'));
@@ -58,6 +58,7 @@ function isRiskUrl(url: string): boolean {
     LucideAlertTriangle,
     LucideArrowLeft,
     LucideBell,
+    LucideBookOpen,
     LucideChevronDown,
     LucideChevronRight,
     LucideClipboardList,
@@ -67,7 +68,6 @@ function isRiskUrl(url: string): boolean {
     LucideSearch,
     LucideShieldAlert,
     LucideShieldCheck,
-    LucideSlidersHorizontal,
     LucideTarget,
     LucideZap,
     SimulatorPanel,
@@ -98,13 +98,20 @@ function isRiskUrl(url: string): boolean {
                         (click)="onGlobalClick(item)">
                   <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
                     @switch (item.key) {
-                      @case ('inventory')  { <svg lucidePackage class="w-3.5 h-3.5"></svg> }
-                      @case ('risk')       { <svg lucideShieldAlert class="w-3.5 h-3.5"></svg> }
-                      @case ('gap')        { <svg lucideTarget class="w-3.5 h-3.5"></svg> }
-                      @case ('monitoring') { <svg lucideActivity class="w-3.5 h-3.5"></svg> }
+                      @case ('inventory')   { <svg lucidePackage class="w-3.5 h-3.5"></svg> }
+                      @case ('methodology') { <svg lucideBookOpen class="w-3.5 h-3.5"></svg> }
+                      @case ('risk')        { <svg lucideShieldAlert class="w-3.5 h-3.5"></svg> }
+                      @case ('gap')         { <svg lucideTarget class="w-3.5 h-3.5"></svg> }
+                      @case ('monitoring')  { <svg lucideActivity class="w-3.5 h-3.5"></svg> }
                     }
                   </span>
                   <span class="flex-1 text-[13px] text-fg-2 group-hover:text-fg rail-label">{{ item.label }}</span>
+                  @if (item.key === 'methodology' && store.activeMethodology().customizationLevel === 'NONE') {
+                    <span class="font-mono text-[9px] tracking-wider px-1 py-0.5 rounded"
+                          style="background:rgb(240 201 135 / 0.20); color:var(--warn)">
+                      DEFAULT
+                    </span>
+                  }
                   @if (item.hasChildren) {
                     <svg lucideChevronRight class="w-3.5 h-3.5 text-fg-4 opacity-0 group-hover:opacity-100 transition-opacity"></svg>
                   }
@@ -117,7 +124,7 @@ function isRiskUrl(url: string): boolean {
                       class="back-link flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-surface text-fg-3 hover:text-fg w-full"
                       (click)="back()">
                 <svg lucideArrowLeft class="w-3.5 h-3.5"></svg>
-                <span class="text-[12.5px] font-medium">Risk Workflow</span>
+                <span class="text-[12.5px] font-medium">Risk Assessment</span>
               </button>
 
               <div class="mx-2 my-2 border-t border-line-soft"></div>
@@ -129,7 +136,6 @@ function isRiskUrl(url: string): boolean {
                   class="rail-link group flex items-start gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface">
                   <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
                     @switch (item.path) {
-                      @case ('criteria')  { <svg lucideSlidersHorizontal class="w-3.5 h-3.5"></svg> }
                       @case ('register')  { <svg lucideAlertTriangle class="w-3.5 h-3.5"></svg> }
                       @case ('treatment') { <svg lucideShieldCheck class="w-3.5 h-3.5"></svg> }
                       @case ('soa')       { <svg lucideFileCheck2 class="w-3.5 h-3.5"></svg> }
@@ -175,8 +181,6 @@ function isRiskUrl(url: string): boolean {
         <div class="bg-bg-2 border-b border-line-soft flex items-center gap-4 px-6 h-14 shrink-0">
           <div class="flex items-center gap-2 text-[11.5px] text-fg-3">
             <span>ISMS</span>
-            <svg class="w-3 h-3 text-fg-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-            <span>Risk workflow</span>
             <svg class="w-3 h-3 text-fg-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
             <span class="text-fg">{{ pageTitle() }}</span>
           </div>
@@ -261,17 +265,17 @@ export class App {
   readonly activeMenu = signal<MenuView>('global');
 
   readonly globalItems: GlobalItem[] = [
-    { key: 'inventory',  label: 'Inventory',  hasChildren: false, route: 'inventory' },
-    { key: 'risk',       label: 'Risk',       hasChildren: true },
-    { key: 'gap',        label: 'Gap',        hasChildren: false, route: 'gap' },
-    { key: 'monitoring', label: 'Monitoring', hasChildren: false, route: 'monitoring' },
+    { key: 'inventory',   label: 'Inventory',         hasChildren: false, route: 'inventory' },
+    { key: 'methodology', label: 'Risk Methodology',  hasChildren: false, route: 'methodology' },
+    { key: 'risk',        label: 'Risk Assessment',   hasChildren: true },
+    { key: 'gap',         label: 'Gap Analysis',      hasChildren: false, route: 'gap' },
+    { key: 'monitoring',  label: 'Monitoring',        hasChildren: false, route: 'monitoring' },
   ];
 
   readonly nav: NavItem[] = [
-    { path: 'criteria',  step: 'STEP 01', label: 'Risk criteria' },
-    { path: 'register',  step: 'STEP 02', label: 'Risk register' },
-    { path: 'treatment', step: 'STEP 03', label: 'Treatment plan' },
-    { path: 'soa',       step: 'STEP 04', label: 'Statement of Applicability' },
+    { path: 'register',  step: 'STEP 01', label: 'Risk register' },
+    { path: 'treatment', step: 'STEP 02', label: 'Treatment plan' },
+    { path: 'soa',       step: 'STEP 03', label: 'Statement of Applicability' },
   ];
 
   constructor() {

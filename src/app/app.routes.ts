@@ -3,13 +3,18 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'register' },
 
-  // Risk inner workflow
+  // Methodology (own top-level entry)
   {
-    path: 'criteria',
+    path: 'methodology',
     loadComponent: () =>
-      import('./views/criteria.component').then((m) => m.CriteriaView),
-    data: { title: 'Risk Criteria', group: 'risk' },
+      import('./views/methodology.component').then((m) => m.MethodologyView),
+    data: { title: 'Risk Methodology', group: 'methodology' },
   },
+
+  // Legacy /criteria → methodology
+  { path: 'criteria', redirectTo: 'methodology' },
+
+  // Risk Assessment inner workflow
   {
     path: 'register',
     loadComponent: () =>
