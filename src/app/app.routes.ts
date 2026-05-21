@@ -29,13 +29,40 @@ export const routes: Routes = [
     data: { title: 'Statement of Applicability', group: 'risk' },
   },
 
-  // Other top-level workspaces (placeholders)
+  // Inventory inner workflow
+  { path: 'inventory', pathMatch: 'full', redirectTo: 'inventory/information' },
   {
-    path: 'inventory',
+    path: 'inventory/information',
     loadComponent: () =>
       import('./views/placeholder.component').then((m) => m.PlaceholderView),
-    data: { title: 'Inventory', group: 'inventory' },
+    data: { title: 'Information assets', group: 'inventory' },
   },
+  {
+    path: 'inventory/processes',
+    loadComponent: () =>
+      import('./views/placeholder.component').then((m) => m.PlaceholderView),
+    data: { title: 'Processes', group: 'inventory' },
+  },
+  {
+    path: 'inventory/it-assets',
+    loadComponent: () =>
+      import('./views/placeholder.component').then((m) => m.PlaceholderView),
+    data: { title: 'IT assets', group: 'inventory' },
+  },
+  {
+    path: 'inventory/physical',
+    loadComponent: () =>
+      import('./views/placeholder.component').then((m) => m.PlaceholderView),
+    data: { title: 'Physical assets', group: 'inventory' },
+  },
+  {
+    path: 'inventory/organization',
+    loadComponent: () =>
+      import('./views/placeholder.component').then((m) => m.PlaceholderView),
+    data: { title: 'Organization', group: 'inventory' },
+  },
+
+  // Other top-level workspaces (placeholders)
   {
     path: 'gap',
     loadComponent: () =>
