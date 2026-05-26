@@ -20,6 +20,8 @@ import {
 } from '@lucide/angular';
 
 import { Classification, InfoAsset, SEED } from './inventory-information.data';
+import { DataTableView, TableColumn } from '../shared/data-table.component';
+import { ProtectionRequirementsView } from './protection-requirements.component';
 
 type Dimension = 'c' | 'i' | 'a';
 type SectionKey = 'base' | 'specifics' | 'protection';
@@ -33,6 +35,13 @@ interface ClassMeta {
   bg: string;
 }
 
+const KIND_BADGE: Record<string, string> = {
+  Process: 'tok-ok',
+  Application: 'tok-info',
+  Supplier: 'tok-warn',
+  'Sub-asset': 'tok-danger',
+};
+
 const CLASS_META: Record<Classification, ClassMeta> = {
   Public: { label: 'PUBLIC', color: 'var(--ok)', bg: 'rgb(140 240 200 / 0.14)' },
   Internal: { label: 'INTERNAL', color: 'var(--info)', bg: 'rgb(141 198 245 / 0.14)' },
@@ -44,6 +53,8 @@ const CLASS_META: Record<Classification, ClassMeta> = {
   standalone: true,
   selector: 'app-asset-detail',
   imports: [
+    DataTableView,
+    ProtectionRequirementsView,
     RouterLink,
     LucideArrowLeft,
     LucideBarChart3,
@@ -148,7 +159,38 @@ const CLASS_META: Record<Classification, ClassMeta> = {
           </div>
 
           <!-- BODY -->
-          <div class="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col gap-4 bg-bg-2">
+          <div class="flex-1 min-h-0 flex flex-col bg-bg-2">
+
+            @if (tab() === 'linked') {
+              <!-- LINKED OBJECTS -->
+              <div class="flex-1 min-h-0 flex flex-col px-5 py-6">
+                <app-data-table
+                  [columns]="linkedColumns"
+                  [rows]="linkedObjects"
+                  scopeLabel="LINKED OBJECTS"
+                  searchPlaceholder="Search ID, name, kind…"
+                  primaryLabel="Link object"
+                  filterKey="kind" />
+              </div>
+            } @else if (tab() === 'assessment') {
+              <!-- ASSESSMENT ASSETS -->
+              <div class="flex-1 min-h-0 flex flex-col px-5 py-6">
+                <app-data-table
+                  [columns]="assessmentColumns"
+                  [rows]="assessments"
+                  scopeLabel="ASSESSMENT ASSETS"
+                  searchPlaceholder="Search ID, name, framework…"
+                  primaryLabel="New assessment"
+                  filterKey="framework" />
+              </div>
+            } @else if (tab() === 'protection') {
+              <!-- PROTECTION REQUIREMENTS -->
+              <div class="flex-1 min-h-0 overflow-y-auto">
+                <app-protection-requirements />
+              </div>
+            } @else {
+
+            <div class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 px-5 py-6">
 
             <!-- SECTION 1: BASE DATA -->
             <div class="ad-card" [class.is-open]="isOpen('base')">
@@ -315,6 +357,8 @@ const CLASS_META: Record<Classification, ClassMeta> = {
 
               </div>
             </div>
+            </div>
+            }
 
           </div>
         </div>
@@ -573,6 +617,46 @@ export class AssetDetailView {
   readonly id = input<string>('');
 
   readonly levels = LEVELS;
+
+  // -------- Dummy linked objects (Linked objects tab) --------
+  readonly linkedObjects = [
+    { id: 'PR-018',  name: 'Customer billing process',        meta: 'Owner · Lana D.',          kind: 'Process',     color: 'var(--accent)' },
+    { id: 'APP-204', name: 'Stripe payments integration',     meta: 'SaaS · external',          kind: 'Application', color: 'var(--info)' },
+    { id: 'SUP-031', name: 'Amazon Web Services',             meta: 'Sub-processor · DPA signed', kind: 'Supplier',    color: 'var(--warn)' },
+    { id: 'IA-014',  name: 'Customer support transcripts',    meta: 'Sub-asset',                kind: 'Sub-asset',   color: 'var(--danger)' },
+    { id: 'PR-009',  name: 'Customer onboarding workflow',    meta: 'Owner · Marko K.',         kind: 'Process',     color: 'var(--accent)' },
+    { id: 'APP-118', name: 'Salesforce CRM',                  meta: 'SaaS · external',          kind: 'Application', color: 'var(--info)' },
+    { id: 'APP-077', name: 'Datadog observability',           meta: 'SaaS · external',          kind: 'Application', color: 'var(--info)' },
+    { id: 'SUP-052', name: 'SendGrid (Twilio)',               meta: 'Sub-processor',            kind: 'Supplier',    color: 'var(--warn)' },
+    { id: 'IA-021',  name: 'Account profile records',         meta: 'Sub-asset',                kind: 'Sub-asset',   color: 'var(--danger)' },
+    { id: 'PR-024',  name: 'Data retention & deletion',       meta: 'Owner · Ana Petrović',     kind: 'Process',     color: 'var(--accent)' },
+    { id: 'APP-156', name: 'Snowflake data warehouse',        meta: 'SaaS · external',          kind: 'Application', color: 'var(--info)' },
+    { id: 'SUP-040', name: 'Cloudflare',                      meta: 'Sub-processor · CDN',      kind: 'Supplier',    color: 'var(--warn)' },
+    { id: 'IA-026',  name: 'Product usage telemetry',         meta: 'Sub-asset',                kind: 'Sub-asset',   color: 'var(--danger)' },
+    { id: 'PR-031',  name: 'Incident response runbook',       meta: 'Owner · Goran T.',         kind: 'Process',     color: 'var(--accent)' },
+  ];
+
+  readonly linkedColumns: TableColumn[] = [
+    { key: 'id',   label: 'ID',            kind: 'mono', width: '96px',           get: (r) => r.id },
+    { key: 'name', label: 'NAME · DETAIL', kind: 'name', width: 'minmax(0, 1fr)', get: (r) => r.name, sub: (r) => r.meta },
+    { key: 'kind', label: 'KIND',          kind: 'badge', width: '150px',         get: (r) => r.kind, badgeClass: (r) => KIND_BADGE[r.kind] ?? 'tok-default' },
+  ];
+
+  // -------- Dummy assessments (Assessment assets tab) --------
+  readonly assessments = [
+    { id: 'RA-2024-07', name: 'Annual ISO 27001 risk assessment',     framework: 'ISO/IEC 27001', year: '2024', completion: 100 },
+    { id: 'GA-2023-11', name: 'GDPR data protection gap analysis',     framework: 'GDPR',          year: '2023', completion: 82 },
+    { id: 'RA-2023-03', name: 'Cloud hosting risk review',            framework: 'SOC 2 Type II', year: '2023', completion: 64 },
+  ];
+
+  readonly assessmentColumns: TableColumn[] = [
+    { key: 'id',         label: 'ID',         kind: 'mono', width: '110px',          get: (r) => r.id },
+    { key: 'name',       label: 'ASSESSMENT', kind: 'name', width: 'minmax(0, 1fr)', get: (r) => r.name },
+    { key: 'framework',  label: 'FRAMEWORK',  kind: 'text', width: '160px',          get: (r) => r.framework },
+    { key: 'year',       label: 'YEAR',       kind: 'mono', width: '70px', align: 'center', get: (r) => r.year },
+    { key: 'status',     label: 'STATUS',     kind: 'badge', width: '140px',         get: (r) => (r.completion >= 100 ? 'Complete' : 'In progress'), badgeClass: (r) => (r.completion >= 100 ? 'tok-ok' : 'tok-info') },
+    { key: 'completion', label: 'COMPLETE',   kind: 'mono', width: '90px', align: 'center', get: (r) => r.completion + '%' },
+  ];
 
   readonly asset = computed<InfoAsset | undefined>(() => SEED.find((x) => x.id === this.id()));
 
