@@ -34,8 +34,14 @@ export const routes: Routes = [
   {
     path: 'inventory/information',
     loadComponent: () =>
-      import('./views/placeholder.component').then((m) => m.PlaceholderView),
+      import('./views/inventory-information.component').then((m) => m.InventoryInformationView),
     data: { title: 'Information assets', group: 'inventory' },
+  },
+  {
+    path: 'inventory/information/:id',
+    loadComponent: () =>
+      import('./views/asset-detail.component').then((m) => m.AssetDetailView),
+    data: { title: 'Asset detail', group: 'inventory' },
   },
   {
     path: 'inventory/processes',
