@@ -1,5 +1,10 @@
 name: Deploy to GitHub Pages
 
+# Single source of truth for deploying the built Angular app to GitHub Pages.
+# IMPORTANT: this only takes effect when repo Settings > Pages > Source is set
+# to "GitHub Actions" (NOT "Deploy from a branch"). With "Deploy from a branch"
+# GitHub serves the repo root and renders README.md via Jekyll instead of the app.
+
 on:
   push:
     branches: [main]
@@ -28,12 +33,18 @@ jobs:
 
       - run: npm ci
 
+      # base-href must match the project-page path: /<repo-name>/
       - name: Build
         run: npx ng build --configuration production --base-href=/specora-sandbox/
 
-      # SPA fallback so deep links (e.g. /inventory/information/IA-001) work on Pages.
-      - name: Add 404 fallback
-        run: cp dist/specora-sandbox/browser/index.html dist/specora-sandbox/browser/404.html
+      - name: Prepare Pages artifact
+        run: |
+          # SPA deep-link fallback (e.g. /inventory/information/IA-001).
+          cp dist/specora-sandbox/browser/index.html dist/specora-sandbox/browser/404.html
+          # Disable Jekyll so the app's files are served verbatim.
+          touch dist/specora-sandbox/browser/.nojekyll
+
+      - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
