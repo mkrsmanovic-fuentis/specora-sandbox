@@ -77,7 +77,7 @@ interface Track {
     LucideUsers,
   ],
   template: `
-    <section class="home px-8 py-6 flex flex-col gap-4">
+    <section class="home mx-auto px-8 py-6 flex flex-col gap-4" style="width: 70%; max-width: 1100px; min-width: 720px;">
 
       <!-- 8. QUICK ACTIONS -->
       <div class="flex items-center gap-2 flex-wrap">
@@ -136,17 +136,7 @@ interface Track {
 
           <ul class="divide-y divide-line-soft">
             @for (q of queue; track q.title) {
-              <li class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-4 py-3 hover:bg-surface-hi/40">
-                <span class="hm-chip" [class]="'hm-src-' + q.source.toLowerCase()">
-                  @switch (q.source) {
-                    @case ('POLICY')  { <svg lucideBookOpen class="hm-chip-ico"></svg> }
-                    @case ('CONTROL') { <svg lucideShieldAlert class="hm-chip-ico"></svg> }
-                    @case ('RISK')    { <svg lucideAlertTriangle class="hm-chip-ico"></svg> }
-                    @case ('VENDOR')  { <svg lucidePackage class="hm-chip-ico"></svg> }
-                    @case ('PEOPLE')  { <svg lucideUsers class="hm-chip-ico"></svg> }
-                  }
-                  {{ q.source }}
-                </span>
+              <li class="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-4 py-3 hover:bg-surface-hi/40">
                 <div class="min-w-0">
                   <div class="text-[13px] text-fg font-medium leading-snug truncate" [innerHTML]="q.title"></div>
                   <div class="text-[11px] font-mono text-fg-4 mt-0.5">{{ q.meta }}</div>
