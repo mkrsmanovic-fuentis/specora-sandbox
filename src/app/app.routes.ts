@@ -1,7 +1,13 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'register' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./views/home.component').then((m) => m.HomeView),
+    data: { title: 'Home', group: 'home' },
+  },
 
   // Risk inner workflow
   {
@@ -82,5 +88,5 @@ export const routes: Routes = [
     data: { title: 'Monitoring', group: 'monitoring' },
   },
 
-  { path: '**', redirectTo: 'register' },
+  { path: '**', redirectTo: '' },
 ];

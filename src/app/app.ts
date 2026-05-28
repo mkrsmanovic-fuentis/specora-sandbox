@@ -105,18 +105,22 @@ function isInventoryUrl(url: string): boolean {
     SimulatorPanel,
   ],
   template: `
-    <div class="grid grid-cols-[280px_1fr] min-h-screen">
-      <!-- LEFT RAIL -->
+    <div class="grid min-h-screen" [style.gridTemplateColumns]="isHome() ? '1fr' : '280px 1fr'">
+      <!-- LEFT RAIL — hidden on Home -->
+      @if (!isHome()) {
       <aside class="bg-bg-2 border-r border-line-soft sticky top-0 h-screen flex flex-col overflow-hidden">
         <div class="px-5 pt-5 pb-3 border-b border-line-soft">
-          <div class="flex items-center gap-2">
+          <a routerLink="/"
+             class="flex items-center gap-2 -mx-2 px-2 py-1 rounded-md hover:bg-surface transition-colors"
+             aria-label="Home"
+             (click)="goHome()">
             <span class="w-7 h-7 rounded-md grid place-items-center text-accent-fg font-bold text-[12px] shrink-0"
                   style="background:linear-gradient(135deg, var(--accent), #5cd8a8); box-shadow:0 0 0 1px rgb(140 240 200/0.30), 0 0 18px rgb(140 240 200/0.25);">
               S
             </span>
             <span class="text-[15px] font-semibold text-fg">specora</span>
             <span class="font-mono font-normal text-fg-3 text-xs">sandbox</span>
-          </div>
+          </a>
         </div>
 
         <nav class="flex-1 overflow-hidden relative" aria-label="Sidebar">
@@ -259,6 +263,7 @@ function isInventoryUrl(url: string): boolean {
           <button class="btn-iconplain" aria-label="Account"><svg lucideChevronDown class="w-3.5 h-3.5"></svg></button>
         </div>
       </aside>
+      }
 
       <!-- MAIN -->
       <main class="overflow-hidden h-screen flex flex-col">
@@ -468,6 +473,7 @@ function isInventoryUrl(url: string): boolean {
                                 (click)="openApp(tile)">
                           <span class="app-tile-ico">
                             @switch (tile.key) {
+                              @case ('isms')       { <svg lucideShieldCheck class="w-4 h-4"></svg> }
                               @case ('risk')       { <svg lucideShieldAlert class="w-4 h-4"></svg> }
                               @case ('gap')        { <svg lucideBarChart3 class="w-4 h-4"></svg> }
                               @case ('monitoring') { <svg lucideEye class="w-4 h-4"></svg> }
@@ -679,6 +685,7 @@ export class App {
 
   // -------- App launcher tile catalog --------
   readonly appTiles: { key: string; label: string; desc: string; route?: string; pinned: boolean }[] = [
+    { key: 'isms',       label: 'ISMS',       desc: 'Management system',          route: '/register',   pinned: true  },
     { key: 'risk',       label: 'Risk',       desc: 'Identify & treat risks',     route: '/register',   pinned: true  },
     { key: 'gap',        label: 'GAP',        desc: 'Map to standards',           route: '/gap',        pinned: true  },
     { key: 'monitoring', label: 'Monitoring', desc: 'Live control signals',       route: '/monitoring', pinned: true  },
@@ -694,12 +701,18 @@ export class App {
   ];
 
   readonly activeAppKey = computed(() => {
-    const url = this.router.url;
+    const url = this.currentUrl();
     if (isRiskUrl(url)) return 'risk';
     if (isInventoryUrl(url)) return 'inventory';
     if (url.startsWith('/gap')) return 'gap';
     if (url.startsWith('/monitoring')) return 'monitoring';
     return null;
+  });
+
+  readonly currentUrl = signal(this.router.url);
+  readonly isHome = computed(() => {
+    const u = this.currentUrl().split('?')[0].split('#')[0];
+    return u === '/' || u === '';
   });
 
   isAppActive(tile: { key: string; route?: string }): boolean {
@@ -747,6 +760,7 @@ export class App {
       .subscribe(() => {
         const route = this.findDeepest(this.route);
         this.currentTitle.set((route.snapshot.data['title'] as string) ?? 'Risk Workflow');
+        this.currentUrl.set(this.router.url);
       });
 
     // Snap the rail to the matching menu state on the first resolved navigation.
@@ -783,6 +797,11 @@ export class App {
 
   back() {
     this.swapMenu('global');
+  }
+
+  goHome() {
+    this.swapMenu('global');
+    this.closeAllPopovers();
   }
 
   private swapMenu(next: MenuView) {
