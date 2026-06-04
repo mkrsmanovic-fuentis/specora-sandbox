@@ -74,6 +74,14 @@ export const routes: Routes = [
     data: { title: 'Organization', group: 'inventory' },
   },
 
+  // Documents (DMS) — self-contained app shell
+  {
+    path: 'documents',
+    loadComponent: () =>
+      import('./dms/dms.component').then((m) => m.DmsView),
+    data: { title: 'Documents', group: 'documents' },
+  },
+
   // Other top-level workspaces (placeholders)
   {
     path: 'gap',
