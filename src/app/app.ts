@@ -24,9 +24,11 @@ import {
   LucidePlus,
   LucideSearch,
   LucideServer,
+  LucideSettings,
   LucideShieldAlert,
   LucideShieldCheck,
   LucideSlidersHorizontal,
+  LucideTag,
   LucideTarget,
   LucideUsers,
   LucideWorkflow,
@@ -36,8 +38,10 @@ import {
 
 import { IsmsStore } from './core/isms-store';
 import { SimulatorPanel } from './shell/simulator-panel.component';
+import { DmsNav } from './dms/dms-nav';
+import { View } from './dms/dms.types';
 
-type GlobalKey = 'inventory' | 'risk' | 'gap' | 'monitoring';
+type GlobalKey = 'inventory' | 'risk' | 'gap' | 'monitoring' | 'documents';
 type MenuView = 'global' | GlobalKey;
 
 interface GlobalItem {
@@ -63,6 +67,9 @@ function isRiskUrl(url: string): boolean {
 }
 function isInventoryUrl(url: string): boolean {
   return url === INVENTORY_PREFIX || url.startsWith(INVENTORY_PREFIX + '/');
+}
+function isDocumentsUrl(url: string): boolean {
+  return url === '/documents' || url.startsWith('/documents/') || url.startsWith('/documents?');
 }
 
 @Component({
@@ -94,9 +101,11 @@ function isInventoryUrl(url: string): boolean {
     LucidePlus,
     LucideSearch,
     LucideServer,
+    LucideSettings,
     LucideShieldAlert,
     LucideShieldCheck,
     LucideSlidersHorizontal,
+    LucideTag,
     LucideTarget,
     LucideUsers,
     LucideWorkflow,
@@ -142,6 +151,7 @@ function isInventoryUrl(url: string): boolean {
                     @case ('risk')       { <svg lucideShieldAlert class="w-3.5 h-3.5"></svg> }
                     @case ('gap')        { <svg lucideTarget class="w-3.5 h-3.5"></svg> }
                     @case ('monitoring') { <svg lucideActivity class="w-3.5 h-3.5"></svg> }
+                    @case ('documents')  { <svg lucideFileText class="w-3.5 h-3.5"></svg> }
                   }
                 </span>
                 <span class="flex-1 text-[13px] text-fg-2 group-hover:text-fg rail-label">{{ item.label }}</span>
@@ -251,6 +261,38 @@ function isInventoryUrl(url: string): boolean {
                 </span>
               }
             </button>
+          </div>
+
+          <!-- DOCUMENTS inner pane (DMS) -->
+          <div class="innernav-pane absolute inset-0 overflow-y-auto px-3 py-3 flex flex-col gap-0.5"
+               [class.innernav-pane-active]="activeMenu() === 'documents'"
+               [class.innernav-pane-leave-left]="leavingMenu() === 'documents'"
+               [attr.aria-hidden]="activeMenu() === 'documents' ? null : true"
+               [attr.inert]="activeMenu() === 'documents' ? null : ''">
+            <button type="button"
+                    class="back-link flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover:bg-surface text-fg-3 hover:text-fg w-full"
+                    (click)="back()">
+              <svg lucideArrowLeft class="w-3.5 h-3.5"></svg>
+              <span class="text-[12.5px] font-medium">Documents</span>
+            </button>
+
+            <div class="mx-2 my-2 border-t border-line-soft"></div>
+
+            @for (item of documentItems; track item.view) {
+              <button type="button"
+                      class="rail-link group flex items-center gap-2.5 px-2 py-2 rounded-md text-left hover:bg-surface w-full"
+                      [class.rail-active]="dmsNav.view() === item.view"
+                      (click)="openDocuments(item.view)">
+                <span class="rail-icon w-7 h-7 rounded-md grid place-items-center shrink-0 bg-surface border border-line-soft text-fg-3">
+                  @switch (item.view) {
+                    @case ('documents') { <svg lucideFileText class="w-3.5 h-3.5"></svg> }
+                    @case ('types')     { <svg lucideTag class="w-3.5 h-3.5"></svg> }
+                    @case ('config')    { <svg lucideSettings class="w-3.5 h-3.5"></svg> }
+                  }
+                </span>
+                <span class="flex-1 text-[13px] text-fg-2 group-hover:text-fg rail-label">{{ item.label }}</span>
+              </button>
+            }
           </div>
         </nav>
 
@@ -641,6 +683,7 @@ export class App {
   readonly store = inject(IsmsStore);
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
+  readonly dmsNav = inject(DmsNav);
 
   readonly simulatorOpen = signal(false);
   readonly currentTitle = signal('Risk Workflow');
@@ -656,6 +699,7 @@ export class App {
     { key: 'risk',       label: 'Risk',       hasChildren: true },
     { key: 'gap',        label: 'Gap',        hasChildren: false, route: 'gap' },
     { key: 'monitoring', label: 'Monitoring', hasChildren: false, route: 'monitoring' },
+    { key: 'documents',  label: 'Documents',  hasChildren: true },
   ];
 
   readonly nav: NavItem[] = [
@@ -671,6 +715,12 @@ export class App {
     { path: 'it-assets',    label: 'IT assets' },
     { path: 'physical',     label: 'Physical' },
     { path: 'organization', label: 'Organization' },
+  ];
+
+  readonly documentItems: { view: View; label: string }[] = [
+    { view: 'documents', label: 'Documents' },
+    { view: 'types',     label: 'Document Types' },
+    { view: 'config',    label: 'Configuration' },
   ];
 
   // -------- Popover state (App launcher · Tasks · Notifications) --------
@@ -692,7 +742,7 @@ export class App {
     { key: 'inventory',  label: 'Inventory',  desc: 'Scope & entities',           route: '/inventory',  pinned: false },
     { key: 'assets',     label: 'Assets',     desc: 'Devices & services',                                pinned: false },
     { key: 'catalogs',   label: 'Catalogs',   desc: 'Reusable taxonomies',                               pinned: false },
-    { key: 'documents',  label: 'Documents',  desc: 'Drafts & evidence',                                 pinned: false },
+    { key: 'documents',  label: 'Documents',  desc: 'Drafts & evidence',          route: '/documents',  pinned: false },
     { key: 'policies',   label: 'Policies',   desc: 'Approved & in force',                               pinned: false },
     { key: 'workflows',  label: 'Workflows',  desc: 'Sequential procedures',                             pinned: false },
     { key: 'iam',        label: 'IAM',        desc: 'Access governance',                                 pinned: false },
@@ -706,6 +756,7 @@ export class App {
     if (isInventoryUrl(url)) return 'inventory';
     if (url.startsWith('/gap')) return 'gap';
     if (url.startsWith('/monitoring')) return 'monitoring';
+    if (url.startsWith('/documents')) return 'documents';
     return null;
   });
 
@@ -714,14 +765,29 @@ export class App {
     const u = this.currentUrl().split('?')[0].split('#')[0];
     return u === '/' || u === '';
   });
+  readonly isDms = computed(() => {
+    const u = this.currentUrl().split('?')[0].split('#')[0];
+    return u === '/documents' || u.startsWith('/documents/');
+  });
 
   isAppActive(tile: { key: string; route?: string }): boolean {
     return this.activeAppKey() === tile.key;
   }
 
-  openApp(tile: { route?: string }) {
+  openApp(tile: { key: string; route?: string }) {
     this.closeAllPopovers();
+    if (tile.key === 'documents') {
+      this.dmsNav.setView('documents');
+      this.swapMenu('documents');
+    }
     if (tile.route) this.router.navigateByUrl(tile.route);
+  }
+
+  /** Rail item inside the Documents workspace — switches the active DMS section. */
+  openDocuments(view: View) {
+    this.dmsNav.setView(view);
+    if (this.activeMenu() !== 'documents') this.swapMenu('documents');
+    if (!isDocumentsUrl(this.router.url)) this.router.navigateByUrl('/documents');
   }
 
   // -------- Tasks & notifications mock data --------
@@ -772,6 +838,7 @@ export class App {
       .subscribe(() => {
         if (isRiskUrl(this.router.url)) this.activeMenu.set('risk');
         else if (isInventoryUrl(this.router.url)) this.activeMenu.set('inventory');
+        else if (isDocumentsUrl(this.router.url)) this.activeMenu.set('documents');
       });
   }
 
@@ -779,6 +846,7 @@ export class App {
     const url = this.router.url;
     if (item.key === 'risk') return isRiskUrl(url);
     if (item.key === 'inventory') return isInventoryUrl(url);
+    if (item.key === 'documents') return isDocumentsUrl(url);
     return item.route ? url.startsWith('/' + item.route) : false;
   }
 
@@ -789,6 +857,9 @@ export class App {
         this.router.navigate(['/register']);
       } else if (item.key === 'inventory' && !isInventoryUrl(this.router.url)) {
         this.router.navigate(['/inventory']);
+      } else if (item.key === 'documents' && !isDocumentsUrl(this.router.url)) {
+        this.dmsNav.setView('documents');
+        this.router.navigate(['/documents']);
       }
       return;
     }
