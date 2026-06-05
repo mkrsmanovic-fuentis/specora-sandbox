@@ -90,3 +90,27 @@
 
 /* toast */
 .dms-root .dms-toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:120; }
+
+/* ── Document-type stack-list row (design ported from specora-ui .role-card) ── */
+.dms-root .type-card { display:flex; align-items:flex-start; gap:.75rem; padding:.875rem 1rem; border-radius:.75rem; border:1px solid var(--line-soft); background:var(--surface); transition:background .08s; }
+.dms-root .type-card-icon { width:32px; height:32px; border-radius:.4375rem; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.dms-root .type-card-icon svg { width:16px; height:16px; }
+.dms-root .type-card-body { flex:1; min-width:0; }
+.dms-root .type-card-name { font-size:.8125rem; font-weight:600; color:var(--fg); }
+.dms-root .type-card-desc { font-size:.75rem; color:var(--fg-2); margin-top:2px; line-height:1.4; }
+.dms-root .type-card-desc.empty { color:var(--fg-4); }
+.dms-root .type-card-fields { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.dms-root .type-card-field { font-size:10.5px; font-family:ui-monospace, monospace; padding:2px 6px; border-radius:4px; background:var(--surface-2); border:1px solid var(--line-soft); color:var(--fg-3); }
+.dms-root .type-card-count { align-self:center; font-size:.6875rem; font-weight:600; font-family:ui-monospace, monospace; color:var(--fg-2); padding:3px 9px; border-radius:9999px; background:var(--surface-hi); border:1px solid var(--line-soft); white-space:nowrap; flex-shrink:0; }
+
+/* ── Available-integration card — deliberately distinct from solid .card:
+      dashed outline + transparent fill, the whole tile is the connect affordance. ── */
+.dms-root .int-avail { display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%; padding:16px 14px; text-align:left; border-radius:12px; border:1px dashed var(--line); background:transparent; cursor:pointer; transition:border-color .14s, background-color .14s, transform .14s, box-shadow .14s; }
+.dms-root .int-avail:hover { border-color:var(--accent); background:var(--accent-dim); transform:translateY(-1px); box-shadow:0 6px 18px -12px rgba(0,0,0,.6); }
+.dms-root .int-avail:focus-visible { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-dim); }
+.dms-root .int-avail-head { display:flex; align-items:center; gap:10px; width:100%; }
+.dms-root .int-avail-name { font-size:13.5px; font-weight:600; color:var(--fg); }
+.dms-root .int-avail-blurb { font-size:11.5px; color:var(--fg-3); line-height:1.5; flex:1; min-height:34px; }
+.dms-root .int-avail-cta { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--fg-4); transition:color .14s; }
+.dms-root .int-avail-cta svg { width:14px; height:14px; }
+.dms-root .int-avail:hover .int-avail-cta { color:var(--accent); }

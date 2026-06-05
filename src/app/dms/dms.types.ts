@@ -6,11 +6,26 @@
 export type View = 'documents' | 'types' | 'config';
 export type IntStatus = 'connected' | 'error' | 'syncing' | 'disabled';
 
+/** Document-type category (single-select, required). */
+export const DOC_CATEGORIES = [
+  'General',
+  'Policy',
+  'Procedure',
+  'Record',
+  'Plan',
+  'Guideline',
+  'Evidence',
+  'Agreement',
+  'Manual',
+] as const;
+export type DocCategory = (typeof DOC_CATEGORIES)[number];
+
 export interface DocType {
   id: string;
   name: string;
   color: string;
   desc: string;
+  category: DocCategory;
   fields: string[];
 }
 
@@ -32,6 +47,13 @@ export interface Integration {
   config: IntegrationConfig;
 }
 
+/** Standard document-attribute option sets (single-select fields). */
+export const CONFIDENTIALITY_LEVELS = ['Public', 'Internal', 'Confidential', 'Restricted'] as const;
+export type Confidentiality = (typeof CONFIDENTIALITY_LEVELS)[number];
+
+export const APPROVAL_STATUSES = ['Draft', 'Approved', 'Archived', 'Deprecated'] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
+
 export interface DmsDoc {
   id: string;
   name: string;
@@ -44,6 +66,17 @@ export interface DmsDoc {
   size: string;
   owner: string;
   meta: Record<string, string>;
+  // ---- standard editable attributes (document detail form) ----
+  description?: string;
+  confidentiality?: Confidentiality | '';
+  reviewedBy?: string | null; // owner key
+  reviewDate?: string;
+  approvedBy?: string | null; // owner key
+  approvalStatus?: ApprovalStatus | '';
+  publishedBy?: string | null; // owner key
+  publishedDate?: string;
+  validUntil?: string;
+  complianceNote?: string;
 }
 
 export interface Owner {
@@ -98,10 +131,10 @@ export function relDate(days: number): string {
 }
 
 export const SEED_TYPES: DocType[] = [
-  { id: 'conf', name: 'CONFIDENTIAL', color: '#f2a4a4', desc: 'Restricted — strictly need-to-know access.', fields: ['Classification owner', 'Review date'] },
-  { id: 'policy', name: 'POLICY', color: '#8dc6f5', desc: 'Approved governing document in force.', fields: ['Version', 'Effective date'] },
-  { id: 'finance', name: 'FINANCE', color: '#f0c987', desc: 'Financial records and statements.', fields: ['Reporting period', 'Currency'] },
-  { id: 'public', name: 'PUBLIC', color: '#8cf0c8', desc: 'Cleared for external distribution.', fields: [] },
+  { id: 'conf', name: 'CONFIDENTIAL', color: '#f2a4a4', desc: 'Restricted — strictly need-to-know access.', category: 'General', fields: ['Classification owner', 'Review date'] },
+  { id: 'policy', name: 'POLICY', color: '#8dc6f5', desc: 'Approved governing document in force.', category: 'Policy', fields: ['Version', 'Effective date'] },
+  { id: 'finance', name: 'FINANCE', color: '#f0c987', desc: 'Financial records and statements.', category: 'Record', fields: ['Reporting period', 'Currency'] },
+  { id: 'public', name: 'PUBLIC', color: '#8cf0c8', desc: 'Cleared for external distribution.', category: 'General', fields: [] },
 ];
 
 export const SEED_INTEGRATIONS: Integration[] = [

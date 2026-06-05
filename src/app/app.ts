@@ -519,6 +519,15 @@ function isDocumentsUrl(url: string): boolean {
                               @case ('risk')       { <svg lucideShieldAlert class="w-4 h-4"></svg> }
                               @case ('gap')        { <svg lucideBarChart3 class="w-4 h-4"></svg> }
                               @case ('monitoring') { <svg lucideEye class="w-4 h-4"></svg> }
+                              @case ('inventory')  { <svg lucidePackage class="w-4 h-4"></svg> }
+                              @case ('assets')     { <svg lucideMonitor class="w-4 h-4"></svg> }
+                              @case ('catalogs')   { <svg lucideListChecks class="w-4 h-4"></svg> }
+                              @case ('documents')  { <svg lucideFileText class="w-4 h-4"></svg> }
+                              @case ('policies')   { <svg lucideBookOpen class="w-4 h-4"></svg> }
+                              @case ('workflows')  { <svg lucideWorkflow class="w-4 h-4"></svg> }
+                              @case ('iam')        { <svg lucideLock class="w-4 h-4"></svg> }
+                              @case ('users')      { <svg lucideUsers class="w-4 h-4"></svg> }
+                              @case ('incidents')  { <svg lucideAlertTriangle class="w-4 h-4"></svg> }
                             }
                           </span>
                           <span>
@@ -541,15 +550,19 @@ function isDocumentsUrl(url: string): boolean {
                                 (click)="openApp(tile)">
                           <span class="app-tile-ico">
                             @switch (tile.key) {
-                              @case ('inventory') { <svg lucidePackage class="w-4 h-4"></svg> }
-                              @case ('assets')    { <svg lucideMonitor class="w-4 h-4"></svg> }
-                              @case ('catalogs')  { <svg lucideListChecks class="w-4 h-4"></svg> }
-                              @case ('documents') { <svg lucideFileText class="w-4 h-4"></svg> }
-                              @case ('policies')  { <svg lucideBookOpen class="w-4 h-4"></svg> }
-                              @case ('workflows') { <svg lucideWorkflow class="w-4 h-4"></svg> }
-                              @case ('iam')       { <svg lucideLock class="w-4 h-4"></svg> }
-                              @case ('users')     { <svg lucideUsers class="w-4 h-4"></svg> }
-                              @case ('incidents') { <svg lucideAlertTriangle class="w-4 h-4"></svg> }
+                              @case ('isms')       { <svg lucideShieldCheck class="w-4 h-4"></svg> }
+                              @case ('risk')       { <svg lucideShieldAlert class="w-4 h-4"></svg> }
+                              @case ('gap')        { <svg lucideBarChart3 class="w-4 h-4"></svg> }
+                              @case ('monitoring') { <svg lucideEye class="w-4 h-4"></svg> }
+                              @case ('inventory')  { <svg lucidePackage class="w-4 h-4"></svg> }
+                              @case ('assets')     { <svg lucideMonitor class="w-4 h-4"></svg> }
+                              @case ('catalogs')   { <svg lucideListChecks class="w-4 h-4"></svg> }
+                              @case ('documents')  { <svg lucideFileText class="w-4 h-4"></svg> }
+                              @case ('policies')   { <svg lucideBookOpen class="w-4 h-4"></svg> }
+                              @case ('workflows')  { <svg lucideWorkflow class="w-4 h-4"></svg> }
+                              @case ('iam')        { <svg lucideLock class="w-4 h-4"></svg> }
+                              @case ('users')      { <svg lucideUsers class="w-4 h-4"></svg> }
+                              @case ('incidents')  { <svg lucideAlertTriangle class="w-4 h-4"></svg> }
                             }
                           </span>
                           <span>
@@ -736,13 +749,13 @@ export class App {
   // -------- App launcher tile catalog --------
   readonly appTiles: { key: string; label: string; desc: string; route?: string; pinned: boolean }[] = [
     { key: 'isms',       label: 'ISMS',       desc: 'Management system',          route: '/register',   pinned: true  },
-    { key: 'risk',       label: 'Risk',       desc: 'Identify & treat risks',     route: '/register',   pinned: true  },
-    { key: 'gap',        label: 'GAP',        desc: 'Map to standards',           route: '/gap',        pinned: true  },
-    { key: 'monitoring', label: 'Monitoring', desc: 'Live control signals',       route: '/monitoring', pinned: true  },
+    { key: 'risk',       label: 'Risk',       desc: 'Identify & treat risks',     route: '/register',   pinned: false },
+    { key: 'gap',        label: 'GAP',        desc: 'Map to standards',           route: '/gap',        pinned: false },
+    { key: 'monitoring', label: 'Monitoring', desc: 'Live control signals',       route: '/monitoring', pinned: false },
     { key: 'inventory',  label: 'Inventory',  desc: 'Scope & entities',           route: '/inventory',  pinned: false },
     { key: 'assets',     label: 'Assets',     desc: 'Devices & services',                                pinned: false },
     { key: 'catalogs',   label: 'Catalogs',   desc: 'Reusable taxonomies',                               pinned: false },
-    { key: 'documents',  label: 'Documents',  desc: 'Drafts & evidence',          route: '/documents',  pinned: false },
+    { key: 'documents',  label: 'Documents',  desc: 'Drafts & evidence',          route: '/documents',  pinned: true  },
     { key: 'policies',   label: 'Policies',   desc: 'Approved & in force',                               pinned: false },
     { key: 'workflows',  label: 'Workflows',  desc: 'Sequential procedures',                             pinned: false },
     { key: 'iam',        label: 'IAM',        desc: 'Access governance',                                 pinned: false },

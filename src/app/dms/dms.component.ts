@@ -1,8 +1,13 @@
 import { Component, computed, effect, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DmsNav } from './dms-nav';
+import { SpStackListComponent, SpStackItemDirective, SpStackListConfig } from './stack-list';
 import {
+  APPROVAL_STATUSES,
+  CONFIDENTIALITY_LEVELS,
   DmsDoc,
+  DocCategory,
+  DOC_CATEGORIES,
   DocType,
   Integration,
   IntStatus,
@@ -41,6 +46,7 @@ type Modal =
   | { kind: 'pull' }
   | { kind: 'type'; editId: string | null }
   | { kind: 'deltype'; id: string }
+  | { kind: 'deldoc'; id: string }
   | { kind: 'connect'; provKey: string | null; editId: string | null };
 
 interface PickedFile {
@@ -52,7 +58,7 @@ interface PickedFile {
 @Component({
   standalone: true,
   selector: 'app-dms',
-  imports: [FormsModule],
+  imports: [FormsModule, SpStackListComponent, SpStackItemDirective],
   templateUrl: './dms.component.html',
   styleUrl: './dms.component.css',
 })
@@ -61,6 +67,9 @@ export class DmsView {
   readonly PALETTE = PALETTE;
   readonly PROVIDERS = PROVIDERS;
   readonly SCOPES = SCOPES;
+  readonly CONFIDENTIALITY_LEVELS = CONFIDENTIALITY_LEVELS;
+  readonly APPROVAL_STATUSES = APPROVAL_STATUSES;
+  readonly DOC_CATEGORIES = DOC_CATEGORIES;
   readonly providerKeys = Object.keys(PROVIDERS);
 
   // ---- core state ----
@@ -94,9 +103,11 @@ export class DmsView {
   readonly tfName = signal('');
   readonly tfColor = signal(PALETTE[3]);
   readonly tfDesc = signal('');
+  readonly tfCategory = signal<DocCategory | ''>('');
   readonly tfFields = signal<string[]>([]);
   readonly tfNewField = signal('');
   readonly tfNameErr = signal(false);
+  readonly tfCategoryErr = signal(false);
   // connect modal
   readonly cfLabel = signal('');
   readonly cfUrl = signal('');
@@ -115,6 +126,9 @@ export class DmsView {
   }
   intById(id: string | null): Integration | null {
     return this.integrations().find((i) => i.id === id) ?? null;
+  }
+  docById(id: string | null): DmsDoc | null {
+    return this.documents().find((d) => d.id === id) ?? null;
   }
   docSourceLabel(d: DmsDoc): string {
     return d.sourceType === 'upload' ? 'Uploaded' : this.intById(d.intId)?.label || 'Integration';
@@ -156,6 +170,28 @@ export class DmsView {
     this.view() === 'documents' ? 'Documents' : this.view() === 'types' ? 'Document Types' : 'Configuration',
   );
   readonly hasIntError = computed(() => this.integrations().some((i) => i.status === 'error'));
+
+  /** Config for the document-types stack list (search + create toolbar action,
+   *  hover edit/delete row actions). Mirrors the risk-detail treatment list. */
+  readonly typesListConfig: SpStackListConfig<DocType> = {
+    searchable: true,
+    searchPlaceholder: 'Search types…',
+    searchFields: [(t) => t.name, (t) => t.desc, (t) => t.fields.join(' ')],
+    trackBy: (t) => t.id,
+    toolbarAction: { id: 'create', label: 'Create type', icon: 'i-plus', variant: 'primary' },
+    actions: [
+      { id: 'edit', label: 'Edit', icon: 'i-edit' },
+      { id: 'delete', label: 'Delete', icon: 'i-trash' },
+    ],
+    emptyTitle: 'No types yet',
+    emptyDesc: 'Create your first document type to start classifying documents.',
+  };
+
+  /** Route a stack-list row action to the matching type handler. */
+  onTypeRowAction(ev: { action: string; item: DocType }) {
+    if (ev.action === 'edit') this.openType(ev.item.id);
+    else if (ev.action === 'delete') this.openDelType(ev.item.id);
+  }
 
   readonly filteredDocs = computed<DmsDoc[]>(() => {
     const q = this.search().trim().toLowerCase();
@@ -286,13 +322,13 @@ export class DmsView {
     this.floatState.set(null);
   }
 
-  private typeMenuItems(includeNone: boolean): FloatItem[] {
+  private typeMenuItems(includeNone: boolean, showCount = true): FloatItem[] {
     const items: FloatItem[] = this.types().map((t) => ({
       value: t.id,
       label: t.name,
       color: t.color,
       mono: true,
-      sub: String(this.typeUsage(t.id)),
+      ...(showCount ? { sub: String(this.typeUsage(t.id)) } : {}),
     }));
     if (includeNone) items.unshift({ value: 'none', label: 'No type', icon: 'i-close' });
     return items;
@@ -386,7 +422,7 @@ export class DmsView {
       header: 'Set type',
       width: 220,
       current: d?.typeId ?? null,
-      items: this.typeMenuItems(true),
+      items: this.typeMenuItems(true, false),
       pick: (v) => {
         const doc = this.drawerDoc();
         if (!doc) return;
@@ -396,6 +432,41 @@ export class DmsView {
       },
     });
   }
+  // ---- standard document attributes (detail form) ----
+  /** Display name for a user/responsible selector value (owner key). */
+  userName(key: string | null | undefined): string {
+    return key ? OWN[key]?.name ?? key : '';
+  }
+  /** Set any string-valued attribute on the open document. */
+  setDocAttr(field: keyof DmsDoc, v: string) {
+    const d = this.drawerDoc();
+    if (!d) return;
+    (d as unknown as Record<string, unknown>)[field] = v;
+    this.bump();
+  }
+  /** Single-select picker (Confidentiality, Approval Status, …). */
+  openDocSelect(ev: Event, field: keyof DmsDoc, options: readonly string[], header: string) {
+    const d = this.drawerDoc();
+    this.openFloat(ev, {
+      header,
+      width: 240,
+      current: (d?.[field] as string) ?? null,
+      items: options.map((o) => ({ value: o, label: o })),
+      pick: (v) => this.setDocAttr(field, v),
+    });
+  }
+  /** User/responsible selector (Reviewed/Approved/Published By). */
+  openDocUser(ev: Event, field: keyof DmsDoc, header: string) {
+    const d = this.drawerDoc();
+    this.openFloat(ev, {
+      header,
+      width: 240,
+      current: (d?.[field] as string) ?? null,
+      items: Object.keys(OWN).map((k) => ({ value: k, label: OWN[k].name })),
+      pick: (v) => this.setDocAttr(field, v),
+    });
+  }
+
   deleteDrawerDoc() {
     const id = this.drawerId();
     if (!id) return;
@@ -404,6 +475,23 @@ export class DmsView {
     s.delete(id);
     this.selected.set(s);
     this.closeDrawer();
+    this.toast('Document deleted');
+  }
+
+  // ---- single-document delete (row action) ----
+  openDelDoc(id: string) {
+    this.modal.set({ kind: 'deldoc', id });
+  }
+  confirmDelDoc() {
+    const m = this.modal();
+    if (!m || m.kind !== 'deldoc') return;
+    const id = m.id;
+    this.documents.set(this.documents().filter((d) => d.id !== id));
+    const s = new Set(this.selected());
+    s.delete(id);
+    this.selected.set(s);
+    if (this.drawerId() === id) this.closeDrawer();
+    this.closeModal();
     this.toast('Document deleted');
   }
 
@@ -545,10 +633,25 @@ export class DmsView {
     this.tfName.set(editing ? editing.name : '');
     this.tfColor.set(editing ? editing.color : PALETTE[3]);
     this.tfDesc.set(editing ? editing.desc : '');
+    this.tfCategory.set(editing ? editing.category : '');
     this.tfFields.set(editing ? [...editing.fields] : []);
     this.tfNewField.set('');
     this.tfNameErr.set(false);
+    this.tfCategoryErr.set(false);
     this.modal.set({ kind: 'type', editId });
+  }
+  /** Category picker for the type modal (required single-select). */
+  openTypeCategoryMenu(ev: Event) {
+    this.openFloat(ev, {
+      header: 'Category',
+      width: 220,
+      current: this.tfCategory() || null,
+      items: DOC_CATEGORIES.map((c) => ({ value: c, label: c })),
+      pick: (v) => {
+        this.tfCategory.set(v as DocCategory);
+        this.tfCategoryErr.set(false);
+      },
+    });
   }
   addField() {
     const v = this.tfNewField().trim();
@@ -565,20 +668,20 @@ export class DmsView {
     const m = this.modal();
     if (!m || m.kind !== 'type') return;
     const name = this.tfName().trim().toUpperCase();
-    if (!name) {
-      this.tfNameErr.set(true);
-      return;
-    }
+    const category = this.tfCategory();
+    this.tfNameErr.set(!name);
+    this.tfCategoryErr.set(!category);
+    if (!name || !category) return;
     const desc = this.tfDesc().trim();
     const color = this.tfColor();
     const fields = this.tfFields();
     if (m.editId) {
       const t = this.typeById(m.editId);
-      if (t) Object.assign(t, { name, color, desc, fields: [...fields] });
+      if (t) Object.assign(t, { name, color, desc, category, fields: [...fields] });
       this.types.set([...this.types()]);
       this.toast('Type updated');
     } else {
-      this.types.set([...this.types(), { id: this.uid('type'), name, color, desc, fields: [...fields] }]);
+      this.types.set([...this.types(), { id: this.uid('type'), name, color, desc, category, fields: [...fields] }]);
       this.toast('Type created');
     }
     this.closeModal();

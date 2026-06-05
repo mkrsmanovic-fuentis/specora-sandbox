@@ -120,8 +120,9 @@
                         <span class="rounded-full grid place-items-center font-semibold shrink-0" [style]="avatarStyle(d.owner, 24)">{{ own(d.owner).initials }}</span>
                         <span class="text-[12px] text-fg-2 truncate">{{ own(d.owner).name }}</span>
                       </div>
-                      <div class="row-actions justify-self-end flex items-center">
-                        <button class="icon-btn" style="width:30px;height:30px" (click)="openDrawer(d.id)" aria-label="Open"><svg class="w-3.5 h-3.5"><use href="#i-edit"></use></svg></button>
+                      <div class="row-actions justify-self-end flex items-center gap-1">
+                        <button class="icon-btn" style="width:30px;height:30px" (click)="openDrawer(d.id)" aria-label="Edit"><svg class="w-3.5 h-3.5"><use href="#i-edit"></use></svg></button>
+                        <button class="icon-btn" style="width:30px;height:30px" (click)="openDelDoc(d.id)" aria-label="Delete"><svg class="w-3.5 h-3.5"><use href="#i-trash"></use></svg></button>
                       </div>
                     </div>
                   }
@@ -155,50 +156,34 @@
 
         <!-- ===================== TYPES ===================== -->
         @case ('types') {
-          <div class="px-6 pt-6 pb-4 border-b border-line-soft flex items-center justify-end gap-4 flex-wrap">
-            <button class="btn btn-primary" (click)="openType(null)"><svg class="w-4 h-4"><use href="#i-plus"></use></svg>Create type</button>
-          </div>
-          <div class="px-6 pt-5 max-w-[920px]">
-            @if (types().length) {
-              <div class="flex flex-col gap-2.5">
-                @for (t of types(); track t.id) {
-                  <div class="card p-4 flex items-start gap-4">
-                    <span class="w-10 h-10 rounded-lg grid place-items-center shrink-0" [style]="tagStyle(t.color)"><svg class="w-5 h-5"><use href="#i-tag"></use></svg></span>
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2.5 flex-wrap">
-                        <span class="type-tag" [style]="tagStyle(t.color)"><span class="tdot"></span>{{ t.name }}</span>
-                        <span class="text-[11.5px] text-fg-4 font-mono">{{ typeUsage(t.id) }} document{{ typeUsage(t.id) === 1 ? '' : 's' }}</span>
+          <div class="px-6 pt-6">
+            <sp-stack-list
+              [config]="typesListConfig"
+              [items]="types()"
+              (toolbarActionClick)="openType(null)"
+              (rowActionClick)="onTypeRowAction($event)">
+              <ng-template spStackItem let-t>
+                <div class="type-card">
+                  <div class="type-card-icon" [style]="tagStyle(t.color)"><svg><use href="#i-tag"></use></svg></div>
+                  <div class="type-card-body">
+                    <div class="type-card-name">{{ t.name }}</div>
+                    @if (t.desc) {
+                      <div class="type-card-desc">{{ t.desc }}</div>
+                    } @else {
+                      <div class="type-card-desc empty">No description</div>
+                    }
+                    @if (t.fields.length) {
+                      <div class="type-card-fields">
+                        @for (f of t.fields; track f) {
+                          <span class="type-card-field">{{ f }}</span>
+                        }
                       </div>
-                      @if (t.desc) {
-                        <p class="text-[12.5px] text-fg-2 mt-1.5">{{ t.desc }}</p>
-                      } @else {
-                        <p class="text-[12.5px] text-fg-4 mt-1.5">No description</p>
-                      }
-                      @if (t.fields.length) {
-                        <div class="flex items-center gap-1.5 flex-wrap mt-2.5">
-                          @for (f of t.fields; track f) {
-                            <span class="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-line-soft text-fg-3">{{ f }}</span>
-                          }
-                        </div>
-                      }
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                      <button class="icon-btn bordered" (click)="openType(t.id)" aria-label="Edit"><svg class="w-3.5 h-3.5"><use href="#i-edit"></use></svg></button>
-                      <button class="icon-btn bordered" (click)="openDelType(t.id)" aria-label="Delete"><svg class="w-3.5 h-3.5"><use href="#i-trash"></use></svg></button>
-                    </div>
+                    }
                   </div>
-                }
-              </div>
-            } @else {
-              <div class="grid place-items-center text-center px-8 py-16">
-                <div class="flex flex-col items-center gap-3 max-w-[340px]">
-                  <span class="w-12 h-12 rounded-xl grid place-items-center bg-surface-2 border border-line-soft text-fg-3"><svg class="w-5 h-5"><use href="#i-tag"></use></svg></span>
-                  <div class="text-[15px] font-medium text-fg">No types yet</div>
-                  <p class="text-[13px] leading-relaxed text-fg-3">Create your first document type to start classifying documents.</p>
-                  <div class="mt-1"><button class="btn btn-primary btn-sm" (click)="openType(null)"><svg class="w-3.5 h-3.5"><use href="#i-plus"></use></svg>Create type</button></div>
+                  <span class="type-card-count">{{ typeUsage(t.id) }} doc{{ typeUsage(t.id) === 1 ? '' : 's' }}</span>
                 </div>
-              </div>
-            }
+              </ng-template>
+            </sp-stack-list>
           </div>
           <div class="h-10"></div>
         }
@@ -256,14 +241,14 @@
             @if (availProviderKeys().length) {
               <div class="grid grid-cols-3 gap-3">
                 @for (key of availProviderKeys(); track key) {
-                  <div class="card p-4 flex flex-col gap-3 items-start">
-                    <div class="flex items-center gap-3 w-full">
+                  <button type="button" class="int-avail" (click)="openConnect(key, null)">
+                    <div class="int-avail-head">
                       <span class="rounded-lg grid place-items-center font-mono font-bold shrink-0" [style]="provTileStyle(key, 30)">{{ provider(key).mono }}</span>
-                      <div class="min-w-0"><div class="text-[13.5px] font-semibold text-fg truncate">{{ provider(key).name }}</div></div>
+                      <div class="min-w-0"><div class="int-avail-name truncate">{{ provider(key).name }}</div></div>
                     </div>
-                    <p class="text-[11.5px] text-fg-3 leading-relaxed flex-1">{{ provider(key).blurb }}</p>
-                    <button class="btn btn-secondary btn-sm w-full" (click)="openConnect(key, null)"><svg class="w-3.5 h-3.5"><use href="#i-link"></use></svg>Connect</button>
-                  </div>
+                    <p class="int-avail-blurb">{{ provider(key).blurb }}</p>
+                    <span class="int-avail-cta"><svg><use href="#i-plus"></use></svg>Connect</span>
+                  </button>
                 }
               </div>
             } @else {
@@ -293,40 +278,109 @@
         <span class="w-12 h-12 rounded-lg grid place-items-center bg-surface border border-line text-fg-3"><svg class="w-6 h-6"><use href="#i-doc"></use></svg></span>
       </div>
 
+      <!-- 1 · Title -->
       <label class="flex flex-col gap-1.5">
-        <span class="field-label">Name</span>
+        <span class="field-label">Title</span>
         <div class="field"><input [ngModel]="d.name" (ngModelChange)="setDrawerName($event)" /><span class="pr-3 text-fg-4 font-mono text-[12px]">.{{ d.ext }}</span></div>
       </label>
 
+      <!-- 2 · Description -->
+      <label class="flex flex-col gap-1.5">
+        <span class="field-label">Description</span>
+        <div class="field" style="align-items:stretch; min-height:64px"><textarea rows="2" placeholder="Short summary of this document…" style="padding:8px 12px; resize:vertical" [ngModel]="d.description || ''" (ngModelChange)="setDocAttr('description', $event)"></textarea></div>
+      </label>
+
+      <!-- 3 · Type (required, single-select from API) -->
       <div class="flex flex-col gap-1.5">
-        <span class="field-label">Document type <span class="text-fg-4 font-normal">· one per document</span></span>
+        <span class="field-label">Type <span class="text-danger font-normal">*</span></span>
         <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDrawerTypeMenu($event)">
           @if (typeById(d.typeId); as t) {
             <span class="type-tag" [style]="tagStyle(t.color)"><span class="tdot"></span>{{ t.name }}</span>
           } @else {
-            <span class="text-[13px] text-fg-4">No type assigned</span>
+            <span class="text-[13px] text-fg-4">Select type…</span>
           }
-          <svg class="w-3.5 h-3.5 text-fg-3"><use href="#i-chev-down"></use></svg>
+          <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
         </button>
       </div>
 
-      @if (typeById(d.typeId); as t) {
-        @if (t.fields.length) {
-          <div class="flex flex-col gap-2.5">
-            <span class="field-label">{{ t.name }} metadata</span>
-            @for (f of t.fields; track f) {
-              <label class="flex flex-col gap-1">
-                <span class="text-[11px] text-fg-3">{{ f }}</span>
-                <div class="field" style="min-height:32px"><input class="text-[12.5px]" placeholder="—" [ngModel]="d.meta[f] || ''" (ngModelChange)="setDrawerMeta(f, $event)" /></div>
-              </label>
-            }
-          </div>
-        } @else {
-          <p class="text-[12px] text-fg-4">No metadata fields defined for this type.</p>
-        }
-      }
+      <!-- 4 · Confidentiality Level -->
+      <div class="flex flex-col gap-1.5">
+        <span class="field-label">Confidentiality Level</span>
+        <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDocSelect($event, 'confidentiality', CONFIDENTIALITY_LEVELS, 'Confidentiality')">
+          <span class="text-[13px]" [class.text-fg-2]="d.confidentiality" [class.text-fg-4]="!d.confidentiality">{{ d.confidentiality || 'Select…' }}</span>
+          <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+        </button>
+      </div>
 
+      <!-- 5 · Reviewed By  +  6 · Review Date -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <span class="field-label">Reviewed By</span>
+          <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDocUser($event, 'reviewedBy', 'Reviewed By')">
+            @if (d.reviewedBy) {
+              <span class="inline-flex items-center gap-2 min-w-0"><span class="rounded-full grid place-items-center font-semibold shrink-0" [style]="avatarStyle(d.reviewedBy, 20)">{{ own(d.reviewedBy).initials }}</span><span class="text-[13px] text-fg-2 truncate">{{ userName(d.reviewedBy) }}</span></span>
+            } @else { <span class="text-[13px] text-fg-4">Select user…</span> }
+            <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+          </button>
+        </div>
+        <label class="flex flex-col gap-1.5">
+          <span class="field-label">Review Date</span>
+          <div class="field"><input type="date" [ngModel]="d.reviewDate || ''" (ngModelChange)="setDocAttr('reviewDate', $event)" /></div>
+        </label>
+      </div>
+
+      <!-- 7 · Approved By  +  8 · Approval Status -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <span class="field-label">Approved By</span>
+          <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDocUser($event, 'approvedBy', 'Approved By')">
+            @if (d.approvedBy) {
+              <span class="inline-flex items-center gap-2 min-w-0"><span class="rounded-full grid place-items-center font-semibold shrink-0" [style]="avatarStyle(d.approvedBy, 20)">{{ own(d.approvedBy).initials }}</span><span class="text-[13px] text-fg-2 truncate">{{ userName(d.approvedBy) }}</span></span>
+            } @else { <span class="text-[13px] text-fg-4">Select user…</span> }
+            <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+          </button>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <span class="field-label">Approval Status</span>
+          <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDocSelect($event, 'approvalStatus', APPROVAL_STATUSES, 'Approval Status')">
+            <span class="text-[13px]" [class.text-fg-2]="d.approvalStatus" [class.text-fg-4]="!d.approvalStatus">{{ d.approvalStatus || 'Select…' }}</span>
+            <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 9 · Published By  +  10 · Published Date -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <span class="field-label">Published By</span>
+          <button class="field justify-between px-3 hover:border-fg-4" style="cursor:pointer" (click)="openDocUser($event, 'publishedBy', 'Published By')">
+            @if (d.publishedBy) {
+              <span class="inline-flex items-center gap-2 min-w-0"><span class="rounded-full grid place-items-center font-semibold shrink-0" [style]="avatarStyle(d.publishedBy, 20)">{{ own(d.publishedBy).initials }}</span><span class="text-[13px] text-fg-2 truncate">{{ userName(d.publishedBy) }}</span></span>
+            } @else { <span class="text-[13px] text-fg-4">Select user…</span> }
+            <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+          </button>
+        </div>
+        <label class="flex flex-col gap-1.5">
+          <span class="field-label">Published Date</span>
+          <div class="field"><input type="date" [ngModel]="d.publishedDate || ''" (ngModelChange)="setDocAttr('publishedDate', $event)" /></div>
+        </label>
+      </div>
+
+      <!-- 11 · Valid Until -->
+      <label class="flex flex-col gap-1.5">
+        <span class="field-label">Valid Until</span>
+        <div class="field"><input type="date" [ngModel]="d.validUntil || ''" (ngModelChange)="setDocAttr('validUntil', $event)" /></div>
+      </label>
+
+      <!-- 12 · Compliance Note -->
+      <label class="flex flex-col gap-1.5">
+        <span class="field-label">Compliance Note</span>
+        <div class="field" style="align-items:stretch; min-height:64px"><textarea rows="2" placeholder="Compliance / retention notes…" style="padding:8px 12px; resize:vertical" [ngModel]="d.complianceNote || ''" (ngModelChange)="setDocAttr('complianceNote', $event)"></textarea></div>
+      </label>
+
+      <!-- read-only intrinsic facts -->
       <div class="flex flex-col gap-0 rounded-lg border border-line-soft overflow-hidden">
+        <div class="px-3.5 pt-2.5 pb-1 text-[10px] font-mono tracking-[0.13em] text-fg-4">DETAILS</div>
         <div class="flex items-center justify-between px-3.5 py-2.5 text-[12.5px] border-b border-line-soft">
           <span class="text-fg-3">Source</span>
           <span class="inline-flex items-center gap-1.5 text-fg-2">
@@ -453,6 +507,14 @@
               @if (tfNameErr()) { <span class="err-text"><svg class="w-3 h-3"><use href="#i-alert"></use></svg>Name is required.</span> }
             </label>
             <div class="flex flex-col gap-1.5">
+              <span class="field-label">Category <span class="req">*</span></span>
+              <button class="field justify-between px-3 hover:border-fg-4" [class.is-error]="tfCategoryErr()" style="cursor:pointer" (click)="openTypeCategoryMenu($event)">
+                <span class="text-[13px]" [class.text-fg]="tfCategory()" [class.text-fg-4]="!tfCategory()">{{ tfCategory() || 'Select category…' }}</span>
+                <svg class="w-3.5 h-3.5 text-fg-3 shrink-0"><use href="#i-chev-down"></use></svg>
+              </button>
+              @if (tfCategoryErr()) { <span class="err-text"><svg class="w-3 h-3"><use href="#i-alert"></use></svg>Category is required.</span> }
+            </div>
+            <div class="flex flex-col gap-1.5">
               <span class="field-label">Color</span>
               <div class="flex items-center gap-2 flex-wrap">
                 @for (c of PALETTE; track c) {
@@ -510,6 +572,29 @@
             <div class="flex-1"></div>
             <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
             <button class="btn btn-primary" style="background:var(--danger)" (click)="confirmDelType()"><svg class="w-4 h-4"><use href="#i-trash"></use></svg>Delete type</button>
+          </div>
+        }
+
+        @case ('deldoc') {
+          <div class="flex items-start gap-3 px-5 pt-4 pb-3.5 border-b border-line-soft">
+            <div class="flex-1"><h2 class="text-[15px] font-semibold text-fg">Delete document</h2></div>
+            <button class="icon-btn" (click)="closeModal()" aria-label="Close"><svg class="w-4 h-4"><use href="#i-close"></use></svg></button>
+          </div>
+          @if (docById(m.id); as d) {
+            <div class="p-5 flex flex-col gap-3">
+              <div class="flex items-start gap-3">
+                <span class="w-9 h-9 rounded-lg grid place-items-center shrink-0 text-danger" style="background:rgb(242 164 164/0.12)"><svg class="w-4 h-4"><use href="#i-trash"></use></svg></span>
+                <div>
+                  <p class="text-[13.5px] text-fg">Delete <b class="text-fg-2">{{ d.name }}.{{ d.ext }}</b> ?</p>
+                  <p class="text-[12.5px] text-fg-3 mt-1.5">This removes the document from the register. This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+          }
+          <div class="flex items-center gap-2 px-5 py-3.5 border-t border-line-soft">
+            <div class="flex-1"></div>
+            <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button class="btn btn-primary" style="background:var(--danger)" (click)="confirmDelDoc()"><svg class="w-4 h-4"><use href="#i-trash"></use></svg>Delete document</button>
           </div>
         }
 
